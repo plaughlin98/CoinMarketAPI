@@ -2,9 +2,11 @@ from requests import Request, Session
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 from prettytable import PrettyTable
 from datetime import datetime
-from colorama import Fore, Back, Style
+from colorama import Fore, Back, Style, init
 import config
 import json
+
+init()
 
 url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
 
@@ -25,18 +27,26 @@ headers = {
 session = Session()
 session.headers.update(headers)
 
-def format_number(value, places):
-    formatted_value =  '{:,}'.format(round(value, places))
-    return formatted_value
+
+def format_number(value, places, type):
+    if type == 'non_percent':   
+        formatted_value =  '{:,}'.format(round(value, places))
+        return formatted_value
+    else:
+        if value <= 0:
+            formatted_value = Back.RED + str(value) + '%' + Style.RESET_ALL
+        else:
+            formatted_value = Back.GREEN + str(value) + '%' + Style.RESET_ALL
+        return formatted_value
 
 def add_table_row(table, name, symbol, amount, value, price, hour_change, day_change, week_change):
     table.add_row([name + ' (' + symbol + ')',
                             str(amount),
-                            '$' + str(format_number(value, 2)),
-                            '$' + str(format_number(price, 2)),
-                            str(format_number(hour_change, 4)),
-                            str(format_number(day_change, 4)),
-                            str(format_number(week_change, 4))])
+                            '$' + str(format_number(value, 2, 'non_percent')),
+                            '$' + str(format_number(price, 2, 'non_percent')),
+                            str(format_number(hour_change, 3, 'percent')),
+                            str(format_number(day_change, 3, 'percent')),
+                            str(format_number(week_change, 3, 'percent'))])
     return table
 
 try:
@@ -76,9 +86,9 @@ try:
             last_updated = currency['last_updated']
             symbol = currency['symbol']
             quotes = currency['quote'][convert]
-            hour_change = quotes['percent_change_1h']
-            day_change = quotes['percent_change_24h']
-            week_change = quotes['percent_change_7d']
+            hour_change = round(quotes['percent_change_1h'],1)
+            day_change = round(quotes['percent_change_24h'],1)
+            week_change = round(quotes['percent_change_7d'],1)
             price = quotes['price']
 
             value = float(price) * float(amount)
