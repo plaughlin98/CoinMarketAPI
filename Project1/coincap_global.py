@@ -34,12 +34,12 @@ def format_number(value, places, type):
         return formatted_value
     else:
         if value <= 0:
-            formatted_value = Back.RED + str(value) + '%' + Style.RESET_ALL
+            formatted_value = Fore.RED + str(value) + '%' + Style.RESET_ALL
         else:
-            formatted_value = Back.GREEN + str(value) + '%' + Style.RESET_ALL
+            formatted_value = Fore.GREEN + str(value) + '%' + Style.RESET_ALL
         return formatted_value
 
-def add_table_row(table, name, symbol, amount, value, price, hour_change, day_change, week_change, month_change):
+def add_table_row(table, name, symbol, amount, value, price, hour_change, day_change, week_change, month_change, two_month_change, three_month_change):
     table.add_row([name + ' (' + symbol + ')',
                             str(amount),
                             '$' + str(format_number(value, 2, 'non_percent')),
@@ -47,7 +47,9 @@ def add_table_row(table, name, symbol, amount, value, price, hour_change, day_ch
                             str(format_number(hour_change, 3, 'percent')),
                             str(format_number(day_change, 3, 'percent')),
                             str(format_number(week_change, 3, 'percent')),
-                            str(format_number(week_change, 3, 'percent'))])
+                            str(format_number(month_change, 3, 'percent')),
+                            str(format_number(two_month_change, 3, 'percent')),
+                            str(format_number(three_month_change, 3, 'percent'))])
     return table
 
 try:
@@ -62,12 +64,12 @@ try:
         symbol = currency['symbol']
         ticker_url_pairs[symbol] = id
 
-    print("\n MY PORTFOLIO \n")
+    print("\n                               MY PORTFOLIO \n")
 
     portfolio_value = 0.00
     last_updated = 0
 
-    table = PrettyTable(['Asset', 'Amount Owned', convert + ' Value', 'Price', 'Hour Change', 'Day Change', 'Week Change', 'Month Change'])
+    table = PrettyTable(['Asset', 'Amount Owned', convert + ' Value', 'Price', 'Hour Change', 'Day Change', 'Week Change', '30d Change', '60d Change', '90d Change'])
 
     with open("portfolio.txt") as input:
         for line in input:
@@ -80,7 +82,6 @@ try:
             results = request.json()
 
             currency = results['data'][str(ticker_url_pairs[ticker])]
-            print(currency)
             id = currency['id']
             name = currency['name']
             last_updated = currency['last_updated']
@@ -90,13 +91,15 @@ try:
             day_change = round(quotes['percent_change_24h'],1)
             week_change = round(quotes['percent_change_7d'],1)
             month_change = round(quotes['percent_change_30d'],1)
+            two_month_change = round(quotes['percent_change_60d'],1)
+            three_month_change = round(quotes['percent_change_90d'],1)
             price = quotes['price']
 
             value = float(price) * float(amount)
 
             portfolio_value += value
 
-            table = add_table_row(table, name, symbol, amount, value, price, hour_change, day_change, week_change, month_change)
+            table = add_table_row(table, name, symbol, amount, value, price, hour_change, day_change, week_change, month_change, two_month_change, three_month_change)
             
     print(table)
     print()
